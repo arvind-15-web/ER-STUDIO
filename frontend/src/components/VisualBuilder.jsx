@@ -84,23 +84,43 @@ function VisualBuilder({ sql, setSql }) {
   };
 
   return (
-    <div style={{ height: '100vh', width: '100%', position: 'relative', borderTop: '2px solid var(--border)' }}>
-      <div style={{ position: 'absolute', top: 20, left: 20, zIndex: 10 }}>
-        <h2 style={{ color: 'var(--text-main)', marginBottom: '10px' }}>Visual Builder (Diagram-to-Code)</h2>
-        <p style={{ color: 'var(--text-muted)', marginBottom: '20px' }}>Edit nodes directly to magically generate SQL code.</p>
-        <button className="cyber-btn primary" onClick={addNewTable}>
-          <Plus size={16} style={{ marginRight: '8px' }} /> Add Table
-        </button>
+    <div style={{ height: '100vh', width: '100%', display: 'flex', flexDirection: 'column', borderTop: '2px solid var(--border)' }}>
+      {/* Premium Toolbar mirroring the top dashboard */}
+      <header className="dash-header" style={{ borderBottom: '1px solid var(--border)', background: 'var(--bg-dark)' }}>
+        <div className="header-left">
+          <h2 style={{ fontSize: '18px', fontWeight: '700', color: 'var(--text-main)', margin: 0 }}>
+            Visual Builder <span style={{ color: 'var(--text-muted)', fontSize: '14px', fontWeight: 'normal' }}>(Diagram-to-Code)</span>
+          </h2>
+        </div>
+        <div className="header-actions">
+          <button 
+            className="cyber-btn" 
+            onClick={addNewTable}
+            style={{ 
+              background: 'linear-gradient(90deg, #3b82f6, #8b5cf6)', 
+              color: 'white', 
+              border: 'none',
+              padding: '8px 16px',
+              fontWeight: 'bold',
+              boxShadow: '0 0 15px rgba(59, 130, 246, 0.4)'
+            }}
+          >
+            <Plus size={16} /> Add New Table
+          </button>
+        </div>
+      </header>
+
+      <div style={{ flex: 1, position: 'relative' }}>
+        <ReactFlow
+          nodes={nodes}
+          edges={edges}
+          nodeTypes={nodeTypes}
+          fitView
+        >
+          <Background color="var(--border)" gap={20} />
+          <Controls />
+        </ReactFlow>
       </div>
-      <ReactFlow
-        nodes={nodes}
-        edges={edges}
-        nodeTypes={nodeTypes}
-        fitView
-      >
-        <Background color="var(--border)" gap={20} />
-        <Controls />
-      </ReactFlow>
     </div>
   );
 }
