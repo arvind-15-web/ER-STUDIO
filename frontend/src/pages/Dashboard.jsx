@@ -123,7 +123,7 @@ function FlowDashboard() {
 
   const fetchBlueprints = async () => {
     try {
-      const response = await fetch('http://localhost:5000/api/blueprints', {
+      const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/blueprints`, {
         headers: { 'Authorization': token }
       });
       if (response.ok) {
@@ -138,7 +138,7 @@ function FlowDashboard() {
   const saveBlueprint = async () => {
     if (!title.trim() || !sql.trim()) return showToast('Title and SQL required!', 'error');
     try {
-      const response = await fetch('http://localhost:5000/api/blueprints', {
+      const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/blueprints`, {
         method: 'POST',
         headers: { 
           'Content-Type': 'application/json',
@@ -185,7 +185,7 @@ function FlowDashboard() {
     if (!window.confirm("Are you sure you want to delete this schema?")) return;
     
     try {
-      const response = await fetch(`http://localhost:5000/api/blueprints/${id}`, {
+      const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/blueprints/${id}`, {
         method: 'DELETE',
         headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
       });
@@ -231,7 +231,7 @@ function FlowDashboard() {
     setIsGenerating(true);
     setError(null);
     try {
-      const response = await fetch('http://localhost:5000/api/generate', {
+      const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/generate`, {
         method: 'POST',
         headers: { 
           'Content-Type': 'application/json',
