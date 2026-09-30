@@ -140,10 +140,8 @@ CREATE TABLE users (
   const [isGenerating, setIsGenerating] = useState(false);
   const fileInputRef = React.useRef(null);
 
-  const handleImageUpload = async (e) => {
-    const file = e.target.files[0];
+  const handleImageFile = async (file) => {
     if (!file) return;
-
     setIsGenerating(true);
     
     // Convert to Base64
@@ -177,6 +175,29 @@ CREATE TABLE users (
     reader.readAsDataURL(file);
   };
 
+  const handleImageUpload = (e) => {
+    handleImageFile(e.target.files[0]);
+  };
+
+  useEffect(() => {
+    const handleGlobalPaste = (e) => {
+      const items = (e.clipboardData || e.originalEvent.clipboardData).items;
+      for (let item of items) {
+        if (item.type.indexOf("image") === 0) {
+          const file = item.getAsFile();
+          if (file) {
+            e.preventDefault();
+            handleImageFile(file);
+            break;
+          }
+        }
+      }
+    };
+
+    window.addEventListener('paste', handleGlobalPaste);
+    return () => window.removeEventListener('paste', handleGlobalPaste);
+  }, []);
+
   return (
     <div style={{ height: '100vh', width: '100%', display: 'flex', flexDirection: 'column', borderTop: '2px solid var(--border)' }}>
       <header className="dash-header" style={{ borderBottom: '1px solid var(--border)', background: 'var(--bg-dark)' }}>
@@ -207,7 +228,7 @@ CREATE TABLE users (
             }}
           >
             {isGenerating ? <Loader2 size={16} className="spin" /> : <ImagePlus size={16} />} 
-            {isGenerating ? ' Scanning Image...' : ' Upload Diagram'}
+            {isGenerating ? ' Scanning Image...' : ' Upload / Paste Image'}
           </button>
 
           <button 
