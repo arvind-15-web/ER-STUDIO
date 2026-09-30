@@ -124,7 +124,7 @@ function FlowDashboard() {
 
   const fetchBlueprints = async () => {
     try {
-      const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/blueprints`, {
+      const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/blueprints?type=code`, {
         headers: { 'Authorization': token }
       });
       if (response.ok) {
@@ -145,7 +145,7 @@ function FlowDashboard() {
           'Content-Type': 'application/json',
           'Authorization': token
         },
-        body: JSON.stringify({ title, sql_content: sql })
+        body: JSON.stringify({ title, sql_content: sql, type: 'code' })
       });
       if (response.ok) {
         showToast('Schema saved successfully!');

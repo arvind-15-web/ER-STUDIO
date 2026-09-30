@@ -26,6 +26,7 @@ const User = mongoose.model('User', UserSchema);
 const BlueprintSchema = new mongoose.Schema({
   title: { type: String, required: true },
   sql_content: { type: String, required: true },
+  type: { type: String, default: 'code' },
   user_id: { type: mongoose.Schema.Types.ObjectId, ref: 'User' } // Associate blueprint with user
 }, { timestamps: true });
 const Blueprint = mongoose.model('Blueprint', BlueprintSchema);
@@ -98,7 +99,7 @@ app.post('/api/blueprints', authMiddleware, async (req, res) => {
     const { title, sql_content } = req.body;
     if (!title || !sql_content) return res.status(400).json({ error: 'Title and SQL required' });
 
-    const newBlueprint = new Blueprint({ title, sql_content, user_id: req.user });
+    const newBlueprint = new Blueprint({ title, sql_content, type: req.body.type || 'code', user_id: req.user });
     const savedBlueprint = await newBlueprint.save();
     res.status(201).json(savedBlueprint);
   } catch (err) {
@@ -108,7 +109,9 @@ app.post('/api/blueprints', authMiddleware, async (req, res) => {
 
 app.get('/api/blueprints', authMiddleware, async (req, res) => {
   try {
-    const blueprints = await Blueprint.find({ user_id: req.user }).sort({ createdAt: -1 });
+    const filter = { user_id: req.user };
+    if (req.query.type) filter.type = req.query.type;
+    const blueprints = await Blueprint.find(filter).sort({ createdAt: -1 });
     res.json(blueprints);
   } catch (err) {
     res.status(500).json({ error: 'Server error fetching blueprints' });

@@ -33,7 +33,7 @@ CREATE TABLE users (
 
   const fetchBlueprints = async () => {
     try {
-      const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/blueprints`, {
+      const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/blueprints?type=visual`, {
         headers: { 'Authorization': token }
       });
       if (response.ok) {
@@ -60,7 +60,7 @@ CREATE TABLE users (
           'Content-Type': 'application/json',
           'Authorization': token
         },
-        body: JSON.stringify({ title: newTitle, sql_content: sql })
+        body: JSON.stringify({ title: newTitle, sql_content: sql, type: 'visual' })
       });
       if (response.ok) {
         alert('Schema saved successfully!');
