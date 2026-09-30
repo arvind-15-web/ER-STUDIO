@@ -37,10 +37,15 @@ function ChenRelationshipNode({ data }) {
       </span>
 
       {/* Target/Source handles allow any connection */}
-      <Handle type="target" position={Position.Top} id="t" style={{ opacity: 0 }} />
-      <Handle type="source" position={Position.Bottom} id="b" style={{ opacity: 0 }} />
+      <Handle type="target" position={Position.Top} id="t-target" style={{ opacity: 0 }} />
+      <Handle type="source" position={Position.Top} id="t-source" style={{ opacity: 0 }} />
+      
+      <Handle type="target" position={Position.Bottom} id="b-target" style={{ opacity: 0 }} />
+      <Handle type="source" position={Position.Bottom} id="b-source" style={{ opacity: 0 }} />
+      
       <Handle type="target" position={Position.Left} id="l-target" style={{ opacity: 0 }} />
       <Handle type="source" position={Position.Left} id="l-source" style={{ opacity: 0 }} />
+      
       <Handle type="target" position={Position.Right} id="r-target" style={{ opacity: 0 }} />
       <Handle type="source" position={Position.Right} id="r-source" style={{ opacity: 0 }} />
     </div>
