@@ -436,12 +436,7 @@ function FlowDashboard() {
             >
               <Controls />
               <Background color="var(--border)" gap={20} size={1} />
-              <MiniMap 
-                nodeStrokeColor={(n) => theme === 'dark' ? '#334155' : '#e2e8f0'}
-                nodeColor={(n) => theme === 'dark' ? '#0f172a' : '#f1f5f9'}
-                maskColor={theme === 'dark' ? 'rgba(11, 17, 33, 0.7)' : 'rgba(248, 250, 252, 0.7)'}
-                style={{ borderRadius: '8px', border: '1px solid var(--border)', background: 'var(--panel-bg)' }}
-              />
+              
             </ReactFlow>
           </div>
         </div>
