@@ -501,7 +501,7 @@ function FlowDashboard() {
       </div>
 
       {/* SECTION 2: Visual Diagram-to-Code Builder */}
-      <VisualBuilder sql={sql} setSql={setSql} />
+      <VisualBuilder />
     </div>
   );
 }

@@ -11,7 +11,15 @@ const nodeTypes = {
   chenEntity: EditableChenNode
 };
 
-function VisualBuilderContent({ sql, setSql }) {
+function VisualBuilderContent() {
+  const [sql, setSql] = useState(`-- Visual Builder Sandbox
+-- This area is completely independent from the top page!
+-- Click "Add New Table", or upload an ER Diagram image to generate code.
+
+CREATE TABLE users (
+  id UUID PRIMARY KEY,
+  name VARCHAR(100)
+);`);
   const [nodes, setNodes] = useState([]);
   const [edges, setEdges] = useState([]);
   const [parsedData, setParsedData] = useState({ tables: [], fks: [] });
