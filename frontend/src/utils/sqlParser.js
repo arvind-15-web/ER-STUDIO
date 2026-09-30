@@ -95,13 +95,19 @@ export function parseSQL(sqlString, notation = 'professional') {
       });
     });
   } else if (notation === 'academic') {
-    // === CLEAN ACADEMIC (CHEN'S) NOTATION ===
+    // === CLEAN ACADEMIC (CHEN'S) NOTATION (GRID LAYOUT) ===
     
-    // We will place Entities in a horizontal row, with their attributes directly below them.
+    // We will place Entities in a Grid to support massive schemas without infinite scrolling
+    const MAX_COLS = 3; // 3 Entities per row
+    
     parsedTables.forEach((table, i) => {
+      const col = i % MAX_COLS;
+      const row = Math.floor(i / MAX_COLS);
+      
       // 1. Position the main Entity (Rectangle)
-      const ex = i * 600 + 100;
-      const ey = 200;
+      // Space them out 700px horizontally, 500px vertically
+      const ex = col * 700 + 100;
+      const ey = row * 500 + 100;
       
       nodes.push({
         id: `entity-${table.name}`,
@@ -114,23 +120,29 @@ export function parseSQL(sqlString, notation = 'professional') {
       const totalCols = table.columns.length;
       const spacing = 150;
       // Calculate starting X so the row of attributes is perfectly centered under the Entity
-      const startAttrX = ex + 60 - ((totalCols - 1) * spacing) / 2; // +60 to account for Entity width
+      // We limit the width of the attribute row to prevent overlapping with neighbor columns
+      let currentSpacing = spacing;
+      if (totalCols * spacing > 600) {
+          currentSpacing = 600 / totalCols; // squish them if there are too many!
+      }
+      
+      const startAttrX = ex + 60 - ((totalCols - 1) * currentSpacing) / 2;
 
-      table.columns.forEach((col, j) => {
-        const ax = startAttrX + (j * spacing);
+      table.columns.forEach((c, j) => {
+        const ax = startAttrX + (j * currentSpacing);
         const ay = ey + 180; // 180px directly below
-        const attrId = `attr-${table.name}-${col.name}`;
+        const attrId = `attr-${table.name}-${c.name}`;
 
         nodes.push({
           id: attrId,
           type: 'chenAttribute',
           position: { x: ax, y: ay },
-          data: { label: col.name, isPrimary: col.isPrimary }
+          data: { label: c.name, isPrimary: c.isPrimary }
         });
 
         // Edge from Entity (Bottom) to Attribute (Top)
         edges.push({
-          id: `e-${table.name}-${col.name}`,
+          id: `e-${table.name}-${c.name}`,
           source: `entity-${table.name}`,
           target: attrId,
           sourceHandle: 'b-source',
@@ -147,10 +159,9 @@ export function parseSQL(sqlString, notation = 'professional') {
       const targetNode = nodes.find(n => n.id === `entity-${fk.foreignTable}`);
       
       if (sourceNode && targetNode) {
-        // Place Diamond exactly between the two Entities horizontally
-        // Ensure dx calculation uses the entity centers (offset by ~60px width)
+        // Place Diamond exactly between the two Entities in both X and Y
         const dx = (sourceNode.position.x + targetNode.position.x) / 2;
-        const dy = sourceNode.position.y; // Keep them on the same Y axis!
+        const dy = (sourceNode.position.y + targetNode.position.y) / 2;
         
         const relId = `rel-${fk.table}-${fk.foreignTable}-${i}`;
         
@@ -161,15 +172,37 @@ export function parseSQL(sqlString, notation = 'professional') {
           data: { label: `Links to` }
         });
 
-        // Edges from Source -> Diamond -> Target
+        // Smart Edge Routing
+        // We figure out the physical relationship between source and target to choose handles
         const isLeftToRight = sourceNode.position.x < targetNode.position.x;
+        const isTopToBottom = sourceNode.position.y < targetNode.position.y;
+        
+        // Default to Left/Right if they are on the same row, else Top/Bottom
+        const sameRow = Math.abs(sourceNode.position.y - targetNode.position.y) < 100;
+        
+        let sourceToDiamondHandle = 'r-source';
+        let diamondToTargetHandle = 'r-source';
+        let diamondTargetH = 'l-target';
+        let entityTargetH = 'l-target';
+
+        if (sameRow) {
+            sourceToDiamondHandle = isLeftToRight ? 'r-source' : 'l-source';
+            diamondTargetH = isLeftToRight ? 'l-target' : 'r-target';
+            diamondToTargetHandle = isLeftToRight ? 'r-source' : 'l-source';
+            entityTargetH = isLeftToRight ? 'l-target' : 'r-target';
+        } else {
+            sourceToDiamondHandle = isTopToBottom ? 'b-source' : 't-source';
+            diamondTargetH = isTopToBottom ? 't-target' : 'b-target';
+            diamondToTargetHandle = isTopToBottom ? 'b-source' : 't-source';
+            entityTargetH = isTopToBottom ? 't-target' : 'b-target';
+        }
 
         edges.push({
           id: `e1-${relId}`,
           source: sourceNode.id,
           target: relId,
-          sourceHandle: isLeftToRight ? 'r-source' : 'l-source',
-          targetHandle: isLeftToRight ? 'l-target' : 'r-target',
+          sourceHandle: sourceToDiamondHandle,
+          targetHandle: diamondTargetH,
           type: 'smoothstep',
           style: { stroke: 'var(--magenta)', strokeWidth: 2 }
         });
@@ -177,8 +210,8 @@ export function parseSQL(sqlString, notation = 'professional') {
           id: `e2-${relId}`,
           source: relId,
           target: targetNode.id,
-          sourceHandle: isLeftToRight ? 'r-source' : 'l-source',
-          targetHandle: isLeftToRight ? 'l-target' : 'r-target',
+          sourceHandle: diamondToTargetHandle,
+          targetHandle: entityTargetH,
           type: 'smoothstep',
           style: { stroke: 'var(--cyan)', strokeWidth: 2 }
         });
