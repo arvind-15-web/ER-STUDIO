@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { ReactFlow, Background, Controls, ReactFlowProvider, useReactFlow } from '@xyflow/react';
-import { Plus, ImagePlus, Loader2, Copy, Check, Download } from 'lucide-react';
+import { Plus, ImagePlus, Loader2, Copy, Check, Download, FolderOpen, Save, Trash2 } from 'lucide-react';
 import { parseSQL } from '../utils/sqlParser';
 import { generateSQL } from '../utils/sqlGenerator';
 import EditableTableNode from './EditableTableNode';
@@ -20,11 +20,79 @@ CREATE TABLE users (
   id UUID PRIMARY KEY,
   name VARCHAR(100)
 );`);
+  const [title, setTitle] = useState('Untitled Visual Schema');
   const [nodes, setNodes] = useState([]);
   const [edges, setEdges] = useState([]);
   const [parsedData, setParsedData] = useState({ tables: [], fks: [] });
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [savedBlueprints, setSavedBlueprints] = useState([]);
   
   const { fitView } = useReactFlow();
+
+  const token = localStorage.getItem('token');
+
+  const fetchBlueprints = async () => {
+    try {
+      const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/blueprints`, {
+        headers: { 'Authorization': token }
+      });
+      if (response.ok) {
+        const data = await response.json();
+        setSavedBlueprints(data);
+      }
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  useEffect(() => {
+    if (token) fetchBlueprints();
+  }, [token]);
+
+  const saveBlueprint = async () => {
+    try {
+      const newTitle = prompt("Enter a name for this Visual Schema:", title);
+      if (!newTitle) return;
+
+      const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/blueprints`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': token
+        },
+        body: JSON.stringify({ title: newTitle, sql_content: sql })
+      });
+      if (response.ok) {
+        alert('Schema saved successfully!');
+        setTitle(newTitle);
+        fetchBlueprints();
+      }
+    } catch (err) {
+      alert('Failed to save schema.');
+    }
+  };
+
+  const loadBlueprint = (blueprint) => {
+    setTitle(blueprint.title);
+    setSql(blueprint.sql_content);
+    setIsSidebarOpen(false);
+  };
+
+  const deleteBlueprint = async (e, id) => {
+    e.stopPropagation();
+    if (!window.confirm("Are you sure you want to delete this schema?")) return;
+    try {
+      const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/blueprints/${id}`, {
+        method: 'DELETE',
+        headers: { 'Authorization': token }
+      });
+      if (response.ok) {
+        setSavedBlueprints(prev => prev.filter(bp => bp._id !== id));
+      }
+    } catch (err) {
+      console.error(err);
+    }
+  };
 
   const updateTableName = (oldName, newName, tables, fks) => {
     if (!newName || newName.trim() === '') return;
@@ -61,25 +129,27 @@ CREATE TABLE users (
   };
 
   useEffect(() => {
-    // We re-parse to get the layout and structure for the visual builder
-    const { nodes: newNodes, edges: newEdges, parsedTables, parsedForeignKeys } = parseSQL(sql, 'professional');
-    
-    // Inject our custom callbacks into the node data
-    const editableNodes = newNodes.map(n => ({
-      ...n,
-      data: {
-        ...n.data,
-        onAddColumn: () => addColumn(n.data.name, parsedTables, parsedForeignKeys),
-        onDeleteColumn: (colName) => deleteColumn(n.data.name, colName, parsedTables, parsedForeignKeys),
-        onDeleteTable: () => deleteTable(n.data.name, parsedTables, parsedForeignKeys),
-        onUpdateTableName: (oldName, newName) => updateTableName(oldName, newName, parsedTables, parsedForeignKeys),
-        onUpdateColumn: (oldColName, newColName, newType) => updateColumn(n.data.name, oldColName, newColName, newType, parsedTables, parsedForeignKeys)
-      }
-    }));
+    try {
+        const { nodes: newNodes, edges: newEdges, parsedTables, parsedForeignKeys } = parseSQL(sql, 'professional');
+        
+        const editableNodes = newNodes.map(n => ({
+        ...n,
+        data: {
+            ...n.data,
+            onAddColumn: () => addColumn(n.data.name, parsedTables, parsedForeignKeys),
+            onDeleteColumn: (colName) => deleteColumn(n.data.name, colName, parsedTables, parsedForeignKeys),
+            onDeleteTable: () => deleteTable(n.data.name, parsedTables, parsedForeignKeys),
+            onUpdateTableName: (oldName, newName) => updateTableName(oldName, newName, parsedTables, parsedForeignKeys),
+            onUpdateColumn: (oldColName, newColName, newType) => updateColumn(n.data.name, oldColName, newColName, newType, parsedTables, parsedForeignKeys)
+        }
+        }));
 
-    setNodes(editableNodes);
-    setEdges(newEdges);
-    setParsedData({ tables: parsedTables, fks: parsedForeignKeys });
+        setNodes(editableNodes);
+        setEdges(newEdges);
+        setParsedData({ tables: parsedTables, fks: parsedForeignKeys });
+    } catch(err) {
+        console.error(err);
+    }
   }, [sql]);
 
   const deleteTable = (tableName, tables, fks) => {
@@ -125,7 +195,6 @@ CREATE TABLE users (
       columns: [{ name: 'id', type: 'INT', isPrimary: true }]
     };
     
-    // Safety check in case it's undefined
     const safeTables = parsedData.tables || [];
     const safeFks = parsedData.fks || [];
     
@@ -159,13 +228,11 @@ CREATE TABLE users (
     if (!file) return;
     setIsGenerating(true);
     
-    // Convert to Base64
     const reader = new FileReader();
     reader.onloadend = async () => {
       const base64String = reader.result;
       
       try {
-        const token = localStorage.getItem('token');
         const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/generate`, {
           method: 'POST',
           headers: { 
@@ -231,7 +298,6 @@ CREATE TABLE users (
       }
     };
 
-    // Attach to document to catch everything
     document.addEventListener('paste', handleGlobalPaste);
     return () => document.removeEventListener('paste', handleGlobalPaste);
   }, []);
@@ -241,7 +307,7 @@ CREATE TABLE users (
       <header className="dash-header" style={{ borderBottom: '1px solid var(--border)', background: 'var(--bg-dark)' }}>
         <div className="header-left">
           <h2 style={{ fontSize: '18px', fontWeight: '700', color: 'var(--text-main)', margin: 0 }}>
-            Visual Builder <span style={{ color: 'var(--text-muted)', fontSize: '14px', fontWeight: 'normal' }}>(Diagram-to-Code)</span>
+            Visual Builder <span style={{ color: 'var(--text-muted)', fontSize: '14px', fontWeight: 'normal' }}>- {title}</span>
           </h2>
         </div>
         <div className="header-actions">
@@ -252,6 +318,15 @@ CREATE TABLE users (
             style={{ display: 'none' }} 
             onChange={handleImageUpload}
           />
+          
+          <button className="cyber-btn ghost" onClick={() => setIsSidebarOpen(!isSidebarOpen)}>
+            <FolderOpen size={16} /> Load
+          </button>
+          
+          <button className="cyber-btn save" onClick={saveBlueprint}>
+            <Save size={16} /> Save
+          </button>
+
           <button 
             className="cyber-btn" 
             onClick={() => fileInputRef.current.click()}
@@ -262,7 +337,8 @@ CREATE TABLE users (
               border: '1px solid var(--cyan)',
               padding: '8px 16px',
               fontWeight: 'bold',
-              marginRight: '10px'
+              marginRight: '10px',
+              marginLeft: '10px'
             }}
           >
             {isGenerating ? <Loader2 size={16} className="spin" /> : <ImagePlus size={16} />} 
@@ -287,6 +363,34 @@ CREATE TABLE users (
       </header>
 
       <div style={{ flex: 1, display: 'flex', position: 'relative' }}>
+        
+        {isSidebarOpen && (
+          <div className="sidebar cyber-panel" style={{ width: '300px', borderRight: '1px solid var(--border)', overflowY: 'auto' }}>
+            <h3>Saved Blueprints</h3>
+            {savedBlueprints.length === 0 ? (
+              <p className="no-data">No schemas saved yet.</p>
+            ) : (
+              <ul style={{ listStyle: 'none', padding: 0, margin: 0 }}>
+                {savedBlueprints.map((bp) => (
+                  <li key={bp._id} onClick={() => loadBlueprint(bp)} className="cyber-card" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', cursor: 'pointer', margin: '8px', padding: '12px' }}>
+                    <div style={{ display: 'flex', flexDirection: 'column' }}>
+                      <strong>{bp.title}</strong>
+                      <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>{new Date(bp.createdAt).toLocaleDateString()}</span>
+                    </div>
+                    <button 
+                      onClick={(e) => deleteBlueprint(e, bp._id)}
+                      style={{ background: 'transparent', border: 'none', color: 'var(--magenta)', cursor: 'pointer', padding: '4px' }}
+                      title="Delete Schema"
+                    >
+                      <Trash2 size={16} />
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
+        )}
+
         <div 
           style={{ flex: 1, position: 'relative' }} 
           onClick={() => setContextMenu(null)}
