@@ -85,12 +85,14 @@ export function parseSQL(sqlString, notation = 'professional') {
         id: `e-${fk.table}-${fk.column}-${fk.foreignTable}-${fk.foreignColumn}-${i}`,
         source: fk.table,
         target: fk.foreignTable,
+        sourceHandle: fk.column,
+        targetHandle: fk.foreignColumn,
         label: 'FOREIGN KEY',
         type: 'smoothstep',
-        animated: true,
-        style: { stroke: '#94a3b8', strokeWidth: 2, strokeDasharray: '5,5' }, // Using explicit hex for html-to-image
+        animated: false,
+        style: { stroke: '#94a3b8', strokeWidth: 2 }, // Solid line instead of dotted
         labelStyle: { fill: '#ffffff', fontSize: 10, fontWeight: 700 },
-        labelBgStyle: { fill: '#8b5cf6', stroke: '#8b5cf6', strokeWidth: 1, rx: 4, ry: 4 }, // Purple pill shape
+        labelBgStyle: { fill: '#8b5cf6', stroke: '#8b5cf6', strokeWidth: 1, rx: 4, ry: 4 },
         labelBgPadding: [6, 4],
       });
     });
