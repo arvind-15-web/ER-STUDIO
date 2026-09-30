@@ -18,6 +18,7 @@ import TableNode from '../components/TableNode';
 import ChenEntityNode from '../components/ChenEntityNode';
 import ChenAttributeNode from '../components/ChenAttributeNode';
 import ChenRelationshipNode from '../components/ChenRelationshipNode';
+import VisualBuilder from '../components/VisualBuilder';
 import { parseSQL } from '../utils/sqlParser';
 import '../App.css';
 
@@ -266,8 +267,9 @@ function FlowDashboard() {
     : nodes.filter(n => n.type === 'chenAttribute').length;
 
   return (
-    <div className="dashboard-container">
-      <header className="dash-header">
+    <div style={{ height: '100vh', overflowY: 'auto', overflowX: 'hidden', backgroundColor: 'var(--bg-dark)' }}>
+      <div className="dashboard-container" style={{ minHeight: '100vh', height: 'auto', flex: 'none' }}>
+        <header className="dash-header">
         <div className="header-left">
           <Database className="logo-icon" />
           <h1>ER Studio</h1>
@@ -480,6 +482,25 @@ function FlowDashboard() {
           </div>
         </div>
       )}
+      
+      {/* Scroll Down Indicator */}
+      <div style={{
+        width: '100%',
+        padding: '1rem',
+        textAlign: 'center',
+        background: 'linear-gradient(to bottom, transparent, rgba(0,0,0,0.5))',
+        color: 'var(--text-muted)',
+        fontSize: '12px',
+        letterSpacing: '1px',
+        textTransform: 'uppercase',
+        borderTop: '1px solid var(--border)',
+        zIndex: 10
+      }}>
+        ▼ Scroll Down for Visual Diagram-to-Code Builder ▼
+      </div>
+
+      {/* SECTION 2: Visual Diagram-to-Code Builder */}
+      <VisualBuilder sql={sql} setSql={setSql} />
     </div>
   );
 }
