@@ -194,9 +194,31 @@ CREATE TABLE users (
     handleImageFile(e.target.files[0]);
   };
 
+  const [contextMenu, setContextMenu] = useState(null);
+
+  const handleCustomPaste = async () => {
+    setContextMenu(null);
+    try {
+      const clipboardItems = await navigator.clipboard.read();
+      for (const clipboardItem of clipboardItems) {
+        const imageTypes = clipboardItem.types.filter(type => type.startsWith('image/'));
+        for (const imageType of imageTypes) {
+          const blob = await clipboardItem.getType(imageType);
+          handleImageFile(blob);
+          return;
+        }
+      }
+      alert("No image found in clipboard!");
+    } catch (err) {
+      console.error(err);
+      alert("Clipboard access denied. Please allow clipboard permissions in your browser.");
+    }
+  };
+
   useEffect(() => {
     const handleGlobalPaste = (e) => {
-      const items = (e.clipboardData || e.originalEvent.clipboardData).items;
+      const items = (e.clipboardData || window.event?.clipboardData)?.items;
+      if (!items) return;
       for (let item of items) {
         if (item.type.indexOf("image") === 0) {
           const file = item.getAsFile();
@@ -209,8 +231,9 @@ CREATE TABLE users (
       }
     };
 
-    window.addEventListener('paste', handleGlobalPaste);
-    return () => window.removeEventListener('paste', handleGlobalPaste);
+    // Attach to document to catch everything
+    document.addEventListener('paste', handleGlobalPaste);
+    return () => document.removeEventListener('paste', handleGlobalPaste);
   }, []);
 
   return (
@@ -264,12 +287,19 @@ CREATE TABLE users (
       </header>
 
       <div style={{ flex: 1, display: 'flex', position: 'relative' }}>
-        <div style={{ flex: 1, position: 'relative' }}>
+        <div 
+          style={{ flex: 1, position: 'relative' }} 
+          onClick={() => setContextMenu(null)}
+        >
           <ReactFlow
             nodes={nodes}
             edges={edges}
             nodeTypes={nodeTypes}
             fitView
+            onPaneContextMenu={(e) => {
+              e.preventDefault();
+              setContextMenu({ x: e.clientX, y: e.clientY });
+            }}
           >
             <Background color="var(--border)" gap={20} />
             <Controls />
@@ -285,8 +315,44 @@ CREATE TABLE users (
               textAlign: 'center',
               zIndex: 0
             }}>
-              Paste Image Here (Ctrl + V)
+              Right-Click or Ctrl+V to Paste Image
             </div>
+            
+            {contextMenu && (
+              <div style={{
+                position: 'fixed',
+                top: contextMenu.y,
+                left: contextMenu.x,
+                background: 'var(--panel-bg)',
+                border: '1px solid var(--border)',
+                borderRadius: '8px',
+                padding: '4px',
+                zIndex: 9999,
+                boxShadow: '0 4px 12px rgba(0,0,0,0.5)',
+                minWidth: '150px'
+              }}>
+                <button
+                  onClick={handleCustomPaste}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '8px',
+                    width: '100%',
+                    padding: '10px',
+                    background: 'transparent',
+                    border: 'none',
+                    color: 'var(--text-main)',
+                    cursor: 'pointer',
+                    textAlign: 'left',
+                    borderRadius: '4px'
+                  }}
+                  onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(255,255,255,0.1)'}
+                  onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
+                >
+                  <ImagePlus size={16} /> Paste Image Here
+                </button>
+              </div>
+            )}
           </ReactFlow>
         </div>
         
