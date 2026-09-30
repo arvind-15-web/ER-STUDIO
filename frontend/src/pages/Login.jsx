@@ -75,6 +75,38 @@ function Login() {
                 width="100%"
               />
             </div>
+            
+            <div style={{ marginTop: '20px', textAlign: 'center' }}>
+              <div style={{ 
+                width: '100%', 
+                height: '1px', 
+                background: 'rgba(255,255,255,0.1)', 
+                margin: '20px 0',
+                position: 'relative'
+              }}>
+                <span style={{
+                  position: 'absolute',
+                  top: '-10px',
+                  left: '50%',
+                  transform: 'translateX(-50%)',
+                  background: 'rgba(30, 41, 59, 1)', // matches glass-card roughly
+                  padding: '0 10px',
+                  color: 'var(--text-muted)',
+                  fontSize: '12px'
+                }}>OR</span>
+              </div>
+              <button 
+                onClick={() => {
+                  localStorage.setItem('token', `guest_${Math.random().toString(36).substring(7)}`);
+                  localStorage.setItem('username', 'Guest Explorer');
+                  navigate('/dashboard');
+                }}
+                className="cyber-btn ghost"
+                style={{ width: '100%', justifyContent: 'center' }}
+              >
+                Try as Guest (Demo Mode)
+              </button>
+            </div>
           </div>
         </div>
       </div>

@@ -206,6 +206,25 @@ CREATE TABLE users (
     }, 100);
   };
 
+  const onConnect = (params) => {
+    const safeTables = parsedData.tables || [];
+    const safeFks = parsedData.fks || [];
+    
+    // Check if FK already exists to avoid duplicates
+    const exists = safeFks.find(fk => fk.table === params.source && fk.column === params.sourceHandle);
+    if (exists) return; // Column already has a foreign key
+
+    const newFk = {
+      table: params.source,
+      column: params.sourceHandle,
+      foreignTable: params.target,
+      foreignColumn: params.targetHandle
+    };
+    
+    const newSql = generateSQL(safeTables, [...safeFks, newFk]);
+    setSql(newSql);
+  };
+
   const [isGenerating, setIsGenerating] = useState(false);
   const [copied, setCopied] = useState(false);
   const fileInputRef = React.useRef(null);
@@ -418,6 +437,7 @@ CREATE TABLE users (
             edges={edges}
             nodeTypes={nodeTypes}
             fitView
+            onConnect={onConnect}
             onPaneContextMenu={(e) => {
               e.preventDefault();
               setContextMenu({ x: e.clientX, y: e.clientY });
