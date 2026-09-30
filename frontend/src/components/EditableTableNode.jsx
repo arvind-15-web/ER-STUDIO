@@ -1,10 +1,31 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Handle, Position } from '@xyflow/react';
 import { Key, Type, Hash, Plus, Trash2 } from 'lucide-react';
 
 function EditableTableNode({ data }) {
   const isMagenta = data.name.length % 2 === 0;
   const accentColor = isMagenta ? 'var(--magenta)' : 'var(--cyan)';
+  
+  const [tableName, setTableName] = useState(data.name);
+
+  // Sync internal state if external data changes
+  useEffect(() => {
+    setTableName(data.name);
+  }, [data.name]);
+
+  const handleNameBlur = () => {
+    if (tableName !== data.name) {
+      if (data.onUpdateTableName) {
+        data.onUpdateTableName(data.name, tableName);
+      }
+    }
+  };
+
+  const handleKeyDown = (e, callback) => {
+    if (e.key === 'Enter') {
+      e.target.blur(); // blur triggers the save
+    }
+  };
 
   return (
     <div className="table-node" style={{
@@ -25,13 +46,21 @@ function EditableTableNode({ data }) {
         justifyContent: 'space-between',
         alignItems: 'center',
       }}>
-        <span style={{ 
-          fontWeight: '700', 
-          fontSize: '14px',
-          color: 'var(--text-main)'
-        }}>
-          {data.name}
-        </span>
+        <input 
+          value={tableName}
+          onChange={(e) => setTableName(e.target.value)}
+          onBlur={handleNameBlur}
+          onKeyDown={handleKeyDown}
+          style={{ 
+            background: 'transparent',
+            border: 'none',
+            outline: 'none',
+            fontWeight: '700', 
+            fontSize: '14px',
+            color: 'var(--text-main)',
+            width: '80%'
+          }}
+        />
         <Trash2 
           size={16} 
           color="var(--red, #ef4444)" 
@@ -47,61 +76,13 @@ function EditableTableNode({ data }) {
           const isNum = col.type.includes('INT') || col.type.includes('SERIAL');
           
           return (
-            <div key={index} style={{
-              display: 'flex',
-              justifyContent: 'space-between',
-              alignItems: 'center',
-              padding: '8px 16px',
-              borderBottom: '1px solid var(--border)',
-              position: 'relative'
-            }}>
-              {col.isPrimary && (
-                <Handle 
-                  type="target" 
-                  position={Position.Left} 
-                  id={col.name} 
-                  style={{ background: accentColor, width: '8px', height: '12px', borderRadius: '4px', border: 'none', left: '-4px' }}
-                />
-              )}
-              
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                {col.isPrimary ? (
-                  <Key size={14} color="var(--yellow)" />
-                ) : (
-                  isNum ? <Hash size={14} color="var(--text-muted)" /> : <Type size={14} color="var(--text-muted)" />
-                )}
-                <span style={{ 
-                  fontWeight: col.isPrimary ? '600' : '400',
-                  fontSize: '13px',
-                  color: col.isPrimary ? accentColor : 'var(--text-main)'
-                }}>
-                  {col.name}
-                </span>
-              </div>
-              
-              <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                <span style={{ 
-                  color: 'var(--text-muted)', 
-                  fontSize: '11px',
-                  fontFamily: '"JetBrains Mono", monospace'
-                }}>
-                  {col.type}
-                </span>
-                <Trash2 
-                  size={14} 
-                  color="var(--red, #ef4444)" 
-                  style={{ cursor: 'pointer', opacity: 0.7 }} 
-                  onClick={() => data.onDeleteColumn(col.name)}
-                />
-              </div>
-
-              <Handle 
-                type="source" 
-                position={Position.Right} 
-                id={col.name} 
-                style={{ background: 'var(--border)', width: '6px', height: '6px', border: 'none', right: '-3px' }}
-              />
-            </div>
+            <EditableColumnRow 
+              key={`${col.name}-${index}`} 
+              col={col} 
+              data={data}
+              accentColor={accentColor}
+              isNum={isNum}
+            />
           );
         })}
         
@@ -126,6 +107,106 @@ function EditableTableNode({ data }) {
           <Plus size={14} /> Add Column
         </div>
       </div>
+    </div>
+  );
+}
+
+// Subcomponent for each column row to manage its own focus state
+function EditableColumnRow({ col, data, accentColor, isNum }) {
+  const [colName, setColName] = useState(col.name);
+  const [colType, setColType] = useState(col.type);
+
+  useEffect(() => {
+    setColName(col.name);
+    setColType(col.type);
+  }, [col.name, col.type]);
+
+  const handleBlur = () => {
+    if (colName !== col.name || colType !== col.type) {
+      if (data.onUpdateColumn) {
+        data.onUpdateColumn(col.name, colName, colType);
+      }
+    }
+  };
+
+  const handleKeyDown = (e) => {
+    if (e.key === 'Enter') {
+      e.target.blur();
+    }
+  };
+
+  return (
+    <div style={{
+      display: 'flex',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      padding: '8px 16px',
+      borderBottom: '1px solid var(--border)',
+      position: 'relative'
+    }}>
+      {col.isPrimary && (
+        <Handle 
+          type="target" 
+          position={Position.Left} 
+          id={col.name} 
+          style={{ background: accentColor, width: '8px', height: '12px', borderRadius: '4px', border: 'none', left: '-4px' }}
+        />
+      )}
+      
+      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+        {col.isPrimary ? (
+          <Key size={14} color="var(--yellow)" />
+        ) : (
+          isNum ? <Hash size={14} color="var(--text-muted)" /> : <Type size={14} color="var(--text-muted)" />
+        )}
+        <input 
+          value={colName}
+          onChange={e => setColName(e.target.value)}
+          onBlur={handleBlur}
+          onKeyDown={handleKeyDown}
+          style={{ 
+            background: 'transparent',
+            border: 'none',
+            outline: 'none',
+            fontWeight: col.isPrimary ? '600' : '400',
+            fontSize: '13px',
+            color: col.isPrimary ? accentColor : 'var(--text-main)',
+            width: '90px'
+          }}
+        />
+      </div>
+      
+      <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+        <input 
+          value={colType}
+          onChange={e => setColType(e.target.value)}
+          onBlur={handleBlur}
+          onKeyDown={handleKeyDown}
+          style={{ 
+            background: 'transparent',
+            border: 'none',
+            outline: 'none',
+            color: 'var(--text-muted)', 
+            fontSize: '11px',
+            fontFamily: '"JetBrains Mono", monospace',
+            width: '65px',
+            textAlign: 'right'
+          }}
+        />
+        <Trash2 
+          size={14} 
+          color="var(--red, #ef4444)" 
+          style={{ cursor: 'pointer', opacity: 0.7 }} 
+          onClick={() => data.onDeleteColumn(col.name)}
+        />
+      </div>
+
+      <Handle 
+        type="source" 
+        position={Position.Right} 
+        id={col.name} 
+        style={{ background: 'var(--border)', width: '6px', height: '6px', border: 'none', right: '-3px' }}
+      />
     </div>
   );
 }

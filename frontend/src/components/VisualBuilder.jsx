@@ -18,6 +18,40 @@ function VisualBuilderContent({ sql, setSql }) {
   
   const { fitView } = useReactFlow();
 
+  const updateTableName = (oldName, newName, tables, fks) => {
+    if (!newName || newName.trim() === '') return;
+    const updatedTables = tables.map(t => {
+      if (t.name === oldName) return { ...t, name: newName };
+      return t;
+    });
+    const updatedFks = fks.map(fk => {
+      let newFk = { ...fk };
+      if (fk.table === oldName) newFk.table = newName;
+      if (fk.foreignTable === oldName) newFk.foreignTable = newName;
+      return newFk;
+    });
+    setSql(generateSQL(updatedTables, updatedFks));
+  };
+
+  const updateColumn = (tableName, oldColName, newColName, newType, tables, fks) => {
+    if (!newColName || newColName.trim() === '') return;
+    const updatedTables = tables.map(t => {
+      if (t.name === tableName) {
+        return {
+          ...t,
+          columns: t.columns.map(c => c.name === oldColName ? { ...c, name: newColName, type: newType || c.type } : c)
+        };
+      }
+      return t;
+    });
+    const updatedFks = fks.map(fk => {
+      let newFk = { ...fk };
+      if (fk.table === tableName && fk.column === oldColName) newFk.column = newColName;
+      return newFk;
+    });
+    setSql(generateSQL(updatedTables, updatedFks));
+  };
+
   useEffect(() => {
     // We re-parse to get the layout and structure for the visual builder
     const { nodes: newNodes, edges: newEdges, parsedTables, parsedForeignKeys } = parseSQL(sql, 'professional');
@@ -29,7 +63,9 @@ function VisualBuilderContent({ sql, setSql }) {
         ...n.data,
         onAddColumn: () => addColumn(n.data.name, parsedTables, parsedForeignKeys),
         onDeleteColumn: (colName) => deleteColumn(n.data.name, colName, parsedTables, parsedForeignKeys),
-        onDeleteTable: () => deleteTable(n.data.name, parsedTables, parsedForeignKeys)
+        onDeleteTable: () => deleteTable(n.data.name, parsedTables, parsedForeignKeys),
+        onUpdateTableName: (oldName, newName) => updateTableName(oldName, newName, parsedTables, parsedForeignKeys),
+        onUpdateColumn: (oldColName, newColName, newType) => updateColumn(n.data.name, oldColName, newColName, newType, parsedTables, parsedForeignKeys)
       }
     }));
 
@@ -119,16 +155,56 @@ function VisualBuilderContent({ sql, setSql }) {
         </div>
       </header>
 
-      <div style={{ flex: 1, position: 'relative' }}>
-        <ReactFlow
-          nodes={nodes}
-          edges={edges}
-          nodeTypes={nodeTypes}
-          fitView
-        >
-          <Background color="var(--border)" gap={20} />
-          <Controls />
-        </ReactFlow>
+      <div style={{ flex: 1, display: 'flex', position: 'relative' }}>
+        <div style={{ flex: 1, position: 'relative' }}>
+          <ReactFlow
+            nodes={nodes}
+            edges={edges}
+            nodeTypes={nodeTypes}
+            fitView
+          >
+            <Background color="var(--border)" gap={20} />
+            <Controls />
+          </ReactFlow>
+        </div>
+        
+        {/* Live Generated SQL Panel */}
+        <div style={{ 
+          width: '400px', 
+          background: 'var(--panel-bg)', 
+          borderLeft: '1px solid var(--border)', 
+          display: 'flex', 
+          flexDirection: 'column' 
+        }}>
+          <div style={{ 
+            padding: '12px 20px', 
+            borderBottom: '1px solid var(--border)', 
+            fontWeight: 'bold', 
+            color: 'var(--text-main)',
+            background: 'var(--bg-dark)',
+            fontSize: '14px'
+          }}>
+            Live Generated SQL
+          </div>
+          <textarea
+            className="sql-editor"
+            value={sql}
+            onChange={(e) => setSql(e.target.value)}
+            spellCheck="false"
+            style={{ 
+              flex: 1, 
+              background: 'transparent', 
+              border: 'none', 
+              padding: '20px', 
+              color: 'var(--cyan)', 
+              fontFamily: '"JetBrains Mono", monospace',
+              fontSize: '14px',
+              lineHeight: '1.5',
+              resize: 'none',
+              outline: 'none'
+            }}
+          />
+        </div>
       </div>
     </div>
   );
