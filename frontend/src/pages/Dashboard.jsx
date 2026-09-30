@@ -482,6 +482,7 @@ function FlowDashboard() {
           </div>
         </div>
       )}
+      </div> {/* CLOSE dashboard-container */}
       
       {/* Scroll Down Indicator */}
       <div style={{
