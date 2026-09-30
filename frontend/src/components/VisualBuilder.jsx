@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { ReactFlow, Background, Controls, ReactFlowProvider, useReactFlow } from '@xyflow/react';
-import { Plus, ImagePlus, Loader2 } from 'lucide-react';
+import { Plus, ImagePlus, Loader2, Copy, Check, Download } from 'lucide-react';
 import { parseSQL } from '../utils/sqlParser';
 import { generateSQL } from '../utils/sqlGenerator';
 import EditableTableNode from './EditableTableNode';
@@ -138,7 +138,22 @@ CREATE TABLE users (
   };
 
   const [isGenerating, setIsGenerating] = useState(false);
+  const [copied, setCopied] = useState(false);
   const fileInputRef = React.useRef(null);
+
+  const copySQL = () => {
+    navigator.clipboard.writeText(sql);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
+
+  const downloadSQL = () => {
+    const blob = new Blob([sql], { type: 'text/sql' });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = `schema_${Math.floor(Math.random() * 1000)}.sql`;
+    a.click();
+  };
 
   const handleImageFile = async (file) => {
     if (!file) return;
@@ -258,6 +273,20 @@ CREATE TABLE users (
           >
             <Background color="var(--border)" gap={20} />
             <Controls />
+            <div style={{
+              position: 'absolute',
+              top: '50%',
+              left: '50%',
+              transform: 'translate(-50%, -50%)',
+              color: 'rgba(255, 255, 255, 0.1)',
+              fontSize: '24px',
+              fontWeight: 'bold',
+              pointerEvents: 'none',
+              textAlign: 'center',
+              zIndex: 0
+            }}>
+              Paste Image Here (Ctrl + V)
+            </div>
           </ReactFlow>
         </div>
         
@@ -297,6 +326,14 @@ CREATE TABLE users (
               outline: 'none'
             }}
           />
+          <div className="editor-footer">
+            <button className="editor-tool-btn" onClick={copySQL} title="Copy SQL">
+              {copied ? <Check size={14} color="#10b981"/> : <Copy size={14} />}
+            </button>
+            <button className="editor-tool-btn" onClick={downloadSQL} title="Download .sql">
+              <Download size={14} />
+            </button>
+          </div>
         </div>
       </div>
     </div>
