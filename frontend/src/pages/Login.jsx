@@ -11,7 +11,7 @@ function Login() {
   const handleGoogleSuccess = (credentialResponse) => {
     localStorage.setItem('token', 'google_dummy_token');
     localStorage.setItem('username', 'Google User');
-    navigate('/dashboard');
+    navigate('/home');
   };
 
   return (
@@ -99,7 +99,7 @@ function Login() {
                 onClick={() => {
                   localStorage.setItem('token', `guest_${Math.random().toString(36).substring(7)}`);
                   localStorage.setItem('username', 'Guest Explorer');
-                  navigate('/dashboard');
+                  navigate('/home');
                 }}
                 className="cyber-btn ghost"
                 style={{ width: '100%', justifyContent: 'center' }}

@@ -11,14 +11,13 @@ import {
   ReactFlowProvider,
 } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
-import { Save, FolderOpen, Play, LogOut, Database, Share2, Sparkles, Moon, Sun, Wand2, LayoutGrid, X, Copy, Download, Check, Trash2 } from 'lucide-react';
+import { Save, FolderOpen, Play, LogOut, Database, Share2, Sparkles, Moon, Sun, Wand2, LayoutGrid, X, Copy, Download, Check, Trash2, ArrowLeft } from 'lucide-react';
 import { toPng } from 'html-to-image';
 
 import TableNode from '../components/TableNode';
 import ChenEntityNode from '../components/ChenEntityNode';
 import ChenAttributeNode from '../components/ChenAttributeNode';
 import ChenRelationshipNode from '../components/ChenRelationshipNode';
-import VisualBuilder from '../components/VisualBuilder';
 import { parseSQL } from '../utils/sqlParser';
 import '../App.css';
 
@@ -271,8 +270,11 @@ function FlowDashboard() {
       <div className="dashboard-container" style={{ minHeight: '100vh', height: 'auto', flex: 'none' }}>
         <header className="dash-header">
         <div className="header-left">
+          <button onClick={() => navigate('/home')} style={{ background: 'transparent', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', display: 'flex', alignItems: 'center', marginRight: '15px' }} title="Back to Home">
+            <ArrowLeft size={20} />
+          </button>
           <Database className="logo-icon" />
-          <h1>ER Studio</h1>
+          <h1 style={{ fontSize: '18px' }}>Code-to-Diagram</h1>
           <input 
             type="text" 
             className="title-input neon-border"
@@ -495,8 +497,7 @@ function FlowDashboard() {
         ▼ Scroll Down for Visual Diagram-to-Code Builder ▼
       </div>
 
-      {/* SECTION 2: Visual Diagram-to-Code Builder */}
-      <VisualBuilder />
+      
     </div>
   );
 }

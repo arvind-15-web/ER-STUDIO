@@ -1,7 +1,9 @@
 import React from 'react';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import Login from './pages/Login';
+import Home from './pages/Home';
 import Dashboard from './pages/Dashboard';
+import VisualBuilder from './components/VisualBuilder';
 import './App.css';
 
 function App() {
@@ -39,7 +41,9 @@ function App() {
       <BrowserRouter>
         <Routes>
           <Route path="/" element={<Login />} />
-          <Route path="/dashboard" element={<Dashboard />} />
+          <Route path="/home" element={<Home />} />
+          <Route path="/code-to-diagram" element={<Dashboard />} />
+          <Route path="/diagram-to-code" element={<VisualBuilder />} />
         </Routes>
       </BrowserRouter>
     </>

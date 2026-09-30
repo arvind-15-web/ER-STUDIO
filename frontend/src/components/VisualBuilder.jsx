@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { ReactFlow, Background, Controls, ReactFlowProvider, useReactFlow } from '@xyflow/react';
-import { Plus, ImagePlus, Loader2, Copy, Check, Download, FolderOpen, Save, Trash2 } from 'lucide-react';
+import { Plus, ImagePlus, Loader2, Copy, Check, Download, FolderOpen, Save, Trash2, ArrowLeft } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import { parseSQL } from '../utils/sqlParser';
 import { generateSQL } from '../utils/sqlGenerator';
 import EditableTableNode from './EditableTableNode';
@@ -28,8 +29,12 @@ CREATE TABLE users (
   const [savedBlueprints, setSavedBlueprints] = useState([]);
   
   const { fitView } = useReactFlow();
-
+  const navigate = useNavigate();
   const token = localStorage.getItem('token');
+
+  useEffect(() => {
+    if (!token) navigate('/');
+  }, [token, navigate]);
 
   const fetchBlueprints = async () => {
     try {
@@ -342,9 +347,12 @@ CREATE TABLE users (
   return (
     <div style={{ height: '100vh', width: '100%', display: 'flex', flexDirection: 'column', borderTop: '2px solid var(--border)' }}>
       <header className="dash-header" style={{ borderBottom: '1px solid var(--border)', background: 'var(--bg-dark)' }}>
-        <div className="header-left">
+        <div className="header-left" style={{ display: 'flex', alignItems: 'center' }}>
+          <button onClick={() => navigate('/home')} style={{ background: 'transparent', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', display: 'flex', alignItems: 'center', marginRight: '15px' }} title="Back to Home">
+            <ArrowLeft size={20} />
+          </button>
           <h2 style={{ fontSize: '18px', fontWeight: '700', color: 'var(--text-main)', margin: 0 }}>
-            Visual Builder <span style={{ color: 'var(--text-muted)', fontSize: '14px', fontWeight: 'normal' }}>- {title}</span>
+            Visual-to-Code Studio <span style={{ color: 'var(--text-muted)', fontSize: '14px', fontWeight: 'normal' }}>- {title}</span>
           </h2>
         </div>
         <div className="header-actions">
