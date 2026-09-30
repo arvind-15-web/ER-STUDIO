@@ -134,8 +134,8 @@ const { GoogleGenerativeAI } = require('@google/generative-ai');
 
 app.post('/api/generate', async (req, res) => {
   try {
-    const { prompt } = req.body;
-    if (!prompt) return res.status(400).json({ error: 'Prompt is required' });
+    const { prompt, imageBase64 } = req.body;
+    if (!prompt && !imageBase64) return res.status(400).json({ error: 'Prompt or image is required' });
 
     const apiKey = process.env.GEMINI_API_KEY;
     if (!apiKey) return res.status(500).json({ error: 'GEMINI_API_KEY is not set in backend .env' });
@@ -144,7 +144,7 @@ app.post('/api/generate', async (req, res) => {
     const model = genAI.getGenerativeModel({ model: "gemini-3-flash-preview" });
 
     const systemInstruction = `You are an expert SQL database architect. 
-The user will describe a software application or a business need. 
+The user will describe a software application or provide a picture of an Entity Relationship Diagram (ERD).
 Your job is to design a perfectly normalized database schema for it.
 RULES:
 1. Return ONLY pure, raw PostgreSQL 'CREATE TABLE' statements. 
@@ -152,7 +152,26 @@ RULES:
 3. Include PRIMARY KEY and FOREIGN KEY relationships.
 4. Keep it concise but complete.`;
 
-    const result = await model.generateContent(`${systemInstruction}\n\nUser Request: ${prompt}`);
+    const contentArray = [];
+    contentArray.push(`${systemInstruction}\n\nUser Request: ${prompt || 'Analyze this diagram and generate the exact raw SQL CREATE TABLE statements for it.'}`);
+    
+    if (imageBase64) {
+      // Strip the prefix if the frontend sends data:image/png;base64,...
+      const base64Data = imageBase64.replace(/^data:image\/\w+;base64,/, "");
+      // Guess mime type from prefix or default to png
+      let mimeType = "image/png";
+      if (imageBase64.includes("image/jpeg")) mimeType = "image/jpeg";
+      if (imageBase64.includes("image/webp")) mimeType = "image/webp";
+
+      contentArray.push({
+        inlineData: {
+          data: base64Data,
+          mimeType: mimeType
+        }
+      });
+    }
+
+    const result = await model.generateContent(contentArray);
     let sqlOutput = result.response.text();
     
     // Clean up any stray markdown if the AI disobeys
