@@ -219,5 +219,5 @@ export function parseSQL(sqlString, notation = 'professional') {
     });
   }
 
-  return { nodes, edges };
+  return { nodes, edges, parsedTables, parsedForeignKeys };
 }

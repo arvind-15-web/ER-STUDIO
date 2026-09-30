@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { ReactFlow, Background, Controls } from '@xyflow/react';
+import { ReactFlow, Background, Controls, ReactFlowProvider, useReactFlow } from '@xyflow/react';
 import { Plus } from 'lucide-react';
 import { parseSQL } from '../utils/sqlParser';
 import { generateSQL } from '../utils/sqlGenerator';
@@ -11,10 +11,12 @@ const nodeTypes = {
   chenEntity: EditableChenNode
 };
 
-function VisualBuilder({ sql, setSql }) {
+function VisualBuilderContent({ sql, setSql }) {
   const [nodes, setNodes] = useState([]);
   const [edges, setEdges] = useState([]);
   const [parsedData, setParsedData] = useState({ tables: [], fks: [] });
+  
+  const { fitView } = useReactFlow();
 
   useEffect(() => {
     // We re-parse to get the layout and structure for the visual builder
@@ -25,9 +27,9 @@ function VisualBuilder({ sql, setSql }) {
       ...n,
       data: {
         ...n.data,
-        onAddColumn: () => addColumn(n.data.label, parsedTables, parsedForeignKeys),
-        onDeleteColumn: (colName) => deleteColumn(n.data.label, colName, parsedTables, parsedForeignKeys),
-        onDeleteTable: () => deleteTable(n.data.label, parsedTables, parsedForeignKeys)
+        onAddColumn: () => addColumn(n.data.name, parsedTables, parsedForeignKeys),
+        onDeleteColumn: (colName) => deleteColumn(n.data.name, colName, parsedTables, parsedForeignKeys),
+        onDeleteTable: () => deleteTable(n.data.name, parsedTables, parsedForeignKeys)
       }
     }));
 
@@ -67,7 +69,6 @@ function VisualBuilder({ sql, setSql }) {
       }
       return t;
     });
-    // Also remove any FKs associated with this column
     const updatedFks = fks.filter(fk => !(fk.table === tableName && fk.column === colName));
     const newSql = generateSQL(updatedTables, updatedFks);
     setSql(newSql);
@@ -79,13 +80,21 @@ function VisualBuilder({ sql, setSql }) {
       name: newTableName,
       columns: [{ name: 'id', type: 'INT', isPrimary: true }]
     };
-    const newSql = generateSQL([...parsedData.tables, newTable], parsedData.fks);
+    
+    // Safety check in case it's undefined
+    const safeTables = parsedData.tables || [];
+    const safeFks = parsedData.fks || [];
+    
+    const newSql = generateSQL([...safeTables, newTable], safeFks);
     setSql(newSql);
+    
+    setTimeout(() => {
+        fitView({ duration: 800, padding: 0.2 });
+    }, 100);
   };
 
   return (
     <div style={{ height: '100vh', width: '100%', display: 'flex', flexDirection: 'column', borderTop: '2px solid var(--border)' }}>
-      {/* Premium Toolbar mirroring the top dashboard */}
       <header className="dash-header" style={{ borderBottom: '1px solid var(--border)', background: 'var(--bg-dark)' }}>
         <div className="header-left">
           <h2 style={{ fontSize: '18px', fontWeight: '700', color: 'var(--text-main)', margin: 0 }}>
@@ -125,4 +134,10 @@ function VisualBuilder({ sql, setSql }) {
   );
 }
 
-export default VisualBuilder;
+export default function VisualBuilder(props) {
+  return (
+    <ReactFlowProvider>
+      <VisualBuilderContent {...props} />
+    </ReactFlowProvider>
+  );
+}
