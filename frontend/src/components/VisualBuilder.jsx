@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { ReactFlow, Background, Controls, ReactFlowProvider, useReactFlow } from '@xyflow/react';
-import { Plus } from 'lucide-react';
+import { Plus, ImagePlus, Loader2 } from 'lucide-react';
 import { parseSQL } from '../utils/sqlParser';
 import { generateSQL } from '../utils/sqlGenerator';
 import EditableTableNode from './EditableTableNode';
@@ -129,6 +129,46 @@ function VisualBuilderContent({ sql, setSql }) {
     }, 100);
   };
 
+  const [isGenerating, setIsGenerating] = useState(false);
+  const fileInputRef = React.useRef(null);
+
+  const handleImageUpload = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    setIsGenerating(true);
+    
+    // Convert to Base64
+    const reader = new FileReader();
+    reader.onloadend = async () => {
+      const base64String = reader.result;
+      
+      try {
+        const token = localStorage.getItem('token');
+        const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/generate`, {
+          method: 'POST',
+          headers: { 
+            'Content-Type': 'application/json',
+            'Authorization': token 
+          },
+          body: JSON.stringify({ imageBase64: base64String })
+        });
+        
+        const data = await response.json();
+        if (response.ok) {
+          setSql(data.sql);
+          setTimeout(() => fitView({ duration: 800 }), 200);
+        } else {
+          alert(data.error || "Generation failed");
+        }
+      } catch (err) {
+        alert("Failed to connect to AI server.");
+      }
+      setIsGenerating(false);
+    };
+    reader.readAsDataURL(file);
+  };
+
   return (
     <div style={{ height: '100vh', width: '100%', display: 'flex', flexDirection: 'column', borderTop: '2px solid var(--border)' }}>
       <header className="dash-header" style={{ borderBottom: '1px solid var(--border)', background: 'var(--bg-dark)' }}>
@@ -138,6 +178,30 @@ function VisualBuilderContent({ sql, setSql }) {
           </h2>
         </div>
         <div className="header-actions">
+          <input 
+            type="file" 
+            accept="image/*" 
+            ref={fileInputRef} 
+            style={{ display: 'none' }} 
+            onChange={handleImageUpload}
+          />
+          <button 
+            className="cyber-btn" 
+            onClick={() => fileInputRef.current.click()}
+            disabled={isGenerating}
+            style={{ 
+              background: 'transparent', 
+              color: 'var(--cyan)', 
+              border: '1px solid var(--cyan)',
+              padding: '8px 16px',
+              fontWeight: 'bold',
+              marginRight: '10px'
+            }}
+          >
+            {isGenerating ? <Loader2 size={16} className="spin" /> : <ImagePlus size={16} />} 
+            {isGenerating ? ' Scanning Image...' : ' Upload Diagram'}
+          </button>
+
           <button 
             className="cyber-btn" 
             onClick={addNewTable}
