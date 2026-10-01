@@ -17,6 +17,20 @@ function Home() {
     navigate('/');
   };
 
+  const getGreeting = () => {
+    const hour = new Date().getHours();
+    if (hour < 12) return 'Good Morning';
+    if (hour < 18) return 'Good Afternoon';
+    return 'Good Evening';
+  };
+
+  const quotes = [
+    "Transform complex data into elegant visual symphonies.",
+    "Architect the foundation of your next great idea.",
+    "Design, visualize, and build the architecture of tomorrow."
+  ];
+  const tagline = quotes[Math.floor(Math.random() * quotes.length)];
+
   return (
     <div style={{
       minHeight: '100vh',
@@ -34,8 +48,12 @@ function Home() {
       <div className="mesh-gradient" style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, zIndex: 0, opacity: 0.3 }}></div>
 
       <div style={{ zIndex: 1, textAlign: 'center', maxWidth: '800px', width: '100%' }}>
-        <h1 style={{ fontSize: '3rem', marginBottom: '10px', color: 'var(--text-main)' }}>Welcome, {username}</h1>
-        <p style={{ fontSize: '1.2rem', color: 'var(--text-muted)', marginBottom: '50px' }}>Select your workspace to get started</p>
+        <h1 style={{ fontSize: '3rem', marginBottom: '10px', color: 'var(--text-main)' }}>
+          {getGreeting()}, <span style={{ color: 'var(--cyan)' }}>{username}</span>
+        </h1>
+        <p style={{ fontSize: '1.2rem', color: 'var(--text-muted)', marginBottom: '50px', fontStyle: 'italic' }}>
+          "{tagline}"
+        </p>
 
         <div style={{ display: 'flex', gap: '30px', justifyContent: 'center', flexWrap: 'wrap' }}>
           
