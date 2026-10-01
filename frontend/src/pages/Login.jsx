@@ -9,8 +9,15 @@ function Login() {
   const navigate = useNavigate();
 
   const handleGoogleSuccess = (credentialResponse) => {
-    localStorage.setItem('token', 'google_dummy_token');
-    localStorage.setItem('username', 'Google User');
+    // Decode the Google JWT to get the user's real name
+    try {
+      const jwtPayload = JSON.parse(atob(credentialResponse.credential.split('.')[1]));
+      const realName = jwtPayload.given_name || jwtPayload.name || 'User';
+      localStorage.setItem('username', realName);
+    } catch (e) {
+      localStorage.setItem('username', 'Google User');
+    }
+    localStorage.setItem('token', 'google_' + Math.random().toString(36).substring(7)); 
     navigate('/home');
   };
 

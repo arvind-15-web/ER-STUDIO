@@ -24,12 +24,7 @@ function Home() {
     return 'Good Evening';
   };
 
-  const quotes = [
-    "Transform complex data into elegant visual symphonies.",
-    "Architect the foundation of your next great idea.",
-    "Design, visualize, and build the architecture of tomorrow."
-  ];
-  const tagline = quotes[Math.floor(Math.random() * quotes.length)];
+  const tagline = "Architect the foundation of your next great idea.";
 
   return (
     <div style={{
@@ -49,7 +44,7 @@ function Home() {
 
       <div style={{ zIndex: 1, textAlign: 'center', maxWidth: '800px', width: '100%' }}>
         <h1 style={{ fontSize: '3rem', marginBottom: '10px', color: 'var(--text-main)' }}>
-          {getGreeting()}, <span style={{ color: 'var(--cyan)' }}>{username}</span>
+          {getGreeting()}, <span style={{ color: 'var(--cyan)' }}>{username} 👋</span>
         </h1>
         <p style={{ fontSize: '1.2rem', color: 'var(--text-muted)', marginBottom: '50px', fontStyle: 'italic' }}>
           "{tagline}"
