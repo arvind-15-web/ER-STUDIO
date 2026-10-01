@@ -4,6 +4,7 @@ import Login from './pages/Login';
 import Home from './pages/Home';
 import Dashboard from './pages/Dashboard';
 import VisualBuilder from './components/VisualBuilder';
+import CVNestLanding from './pages/CVNestLanding';
 import './App.css';
 
 function App() {
@@ -44,6 +45,7 @@ function App() {
           <Route path="/home" element={<Home />} />
           <Route path="/code-to-diagram" element={<Dashboard />} />
           <Route path="/diagram-to-code" element={<VisualBuilder />} />
+          <Route path="/cvnest" element={<CVNestLanding />} />
         </Routes>
       </BrowserRouter>
     </>
