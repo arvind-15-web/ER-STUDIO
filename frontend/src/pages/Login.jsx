@@ -8,17 +8,25 @@ const GOOGLE_CLIENT_ID = "529017952828-b6bfjknq1bmndt9sv7t9is3v1i5acp6q.apps.goo
 function Login() {
   const navigate = useNavigate();
 
-  const handleGoogleSuccess = (credentialResponse) => {
-    // Decode the Google JWT to get the user's real name
+  const handleGoogleSuccess = async (credentialResponse) => {
     try {
       const jwtPayload = JSON.parse(atob(credentialResponse.credential.split('.')[1]));
       const realName = jwtPayload.given_name || jwtPayload.name || 'User';
-      localStorage.setItem('username', realName);
+      
+      const res = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/auth/google`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username: realName, googleId: jwtPayload.sub || credentialResponse.credential })
+      });
+      const data = await res.json();
+      
+      localStorage.setItem('username', data.username);
+      localStorage.setItem('token', data.token);
+      navigate('/home');
     } catch (e) {
-      localStorage.setItem('username', 'Google User');
+      console.error(e);
+      alert('Login failed. Please try again.');
     }
-    localStorage.setItem('token', 'google_' + Math.random().toString(36).substring(7)); 
-    navigate('/home');
   };
 
   return (
@@ -103,10 +111,21 @@ function Login() {
                 }}>OR</span>
               </div>
               <button 
-                onClick={() => {
-                  localStorage.setItem('token', `guest_${Math.random().toString(36).substring(7)}`);
-                  localStorage.setItem('username', 'Guest Explorer');
-                  navigate('/home');
+                onClick={async () => {
+                  try {
+                    const guestName = 'Guest_' + Math.random().toString(36).substring(7);
+                    const res = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/auth/guest`, {
+                      method: 'POST',
+                      headers: { 'Content-Type': 'application/json' },
+                      body: JSON.stringify({ username: guestName })
+                    });
+                    const data = await res.json();
+                    localStorage.setItem('token', data.token);
+                    localStorage.setItem('username', data.username);
+                    navigate('/home');
+                  } catch (e) {
+                    alert('Guest login failed.');
+                  }
                 }}
                 className="cyber-btn ghost"
                 style={{ width: '100%', justifyContent: 'center' }}

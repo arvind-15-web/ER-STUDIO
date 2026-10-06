@@ -19,7 +19,7 @@ app.use(express.urlencoded({ limit: '50mb', extended: true }));
 // --- Mongoose Models ---
 const UserSchema = new mongoose.Schema({
   username: { type: String, required: true, unique: true },
-  password: { type: String, required: true },
+  password: { type: String },
 });
 const User = mongoose.model('User', UserSchema);
 
@@ -41,13 +41,6 @@ const authMiddleware = (req, res, next) => {
     token = token.slice(7, token.length).trimLeft();
   }
 
-  // Allow prototype testing without full Google Verification backend
-  if (token === 'google_dummy_token' || token.startsWith('google_') || token.startsWith('guest_')) {
-    // Must be a valid 24-character hex string so Mongoose doesn't throw a CastError on ObjectId
-    req.user = '507f1f77bcf86cd799439011';
-    return next();
-  }
-
   try {
     const decoded = jwt.verify(token, process.env.JWT_SECRET || 'supersecretkey');
     req.user = decoded.userId;
@@ -58,6 +51,36 @@ const authMiddleware = (req, res, next) => {
 };
 
 // --- AUTH API ---
+app.post('/api/auth/google', async (req, res) => {
+  try {
+    const { username, googleId } = req.body;
+    let user = await User.findOne({ username });
+    if (!user) {
+      user = new User({ username, password: googleId || 'google_auth' });
+      await user.save();
+    }
+    const token = jwt.sign({ userId: user._id }, process.env.JWT_SECRET || 'supersecretkey', { expiresIn: '7d' });
+    res.json({ token, username: user.username });
+  } catch (err) {
+    res.status(500).json({ error: 'Server error during Google auth' });
+  }
+});
+
+app.post('/api/auth/guest', async (req, res) => {
+  try {
+    const { username } = req.body;
+    let user = await User.findOne({ username });
+    if (!user) {
+      user = new User({ username, password: 'guest_password' });
+      await user.save();
+    }
+    const token = jwt.sign({ userId: user._id }, process.env.JWT_SECRET || 'supersecretkey', { expiresIn: '1d' });
+    res.json({ token, username: user.username });
+  } catch (err) {
+    res.status(500).json({ error: 'Server error during Guest auth' });
+  }
+});
+
 app.post('/api/auth/register', async (req, res) => {
   try {
     const { username, password } = req.body;
